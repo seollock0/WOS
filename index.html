@@ -52,9 +52,22 @@ button{
   border:1px solid #35508a;
   background:#0f1a3a;
   color:#fff;
+  cursor:pointer;
 }
 button.secondary{
   background:#0c1430;
+}
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#0e2338;
+  border:1px solid #2b5ea6;
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:14px;
+  display:none;
 }
 </style>
 </head>
@@ -64,8 +77,19 @@ button.secondary{
 <h1>📢 WOS 공지</h1>
 <div id="list">불러오는 중…</div>
 
+<div id="toast" class="toast">복사 완료</div>
+
 <script>
 const API = "https://api.github.com/repos/seollock0/WOS/issues";
+const toast = document.getElementById("toast");
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.style.display = "block";
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 1200);
+}
 
 fetch(API)
   .then(r => r.json())
@@ -78,25 +102,27 @@ fetch(API)
 
       const card = document.createElement("div");
       card.className = "card";
+
       card.innerHTML = `
         <div class="title">${issue.title}</div>
         <div class="meta">#${issue.number} · ${issue.created_at.slice(0,10)}</div>
         <div class="content">${issue.body}</div>
         <div class="actions">
-          <button>📋 복사</button>
-          <button class="secondary">✏️ GitHub에서 수정</button>
+          <button class="copy-btn">📋 본문 복사</button>
+          <button class="secondary edit-btn">✏️ GitHub에서 수정</button>
         </div>
       `;
 
-    const contentEl = card.querySelector(".content");
+      const contentEl = card.querySelector(".content");
 
-card.querySelector("button").onclick = () => {
-  navigator.clipboard.writeText(contentEl.innerText);
-  alert("복사 완료");
-};
+      // ✅ 공지 본문만 복사
+      card.querySelector(".copy-btn").onclick = () => {
+        navigator.clipboard.writeText(contentEl.innerText);
+        showToast("공지 본문 복사 완료");
+      };
 
-
-      card.querySelector(".secondary").onclick = () => {
+      // GitHub Issue로 이동
+      card.querySelector(".edit-btn").onclick = () => {
         window.open(issue.html_url, "_blank");
       };
 
@@ -107,5 +133,4 @@ card.querySelector("button").onclick = () => {
 
 </body>
 </html>
-
-<!-- pages rebuild trigger -->
+``
