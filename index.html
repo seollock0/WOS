@@ -15,7 +15,27 @@ body{
 }
 h1{
   font-size:20px;
+  margin-bottom:12px;
+}
+.categories{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
   margin-bottom:16px;
+}
+.cat-btn{
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid #35508a;
+  background:#0f1a3a;
+  color:#cfe1ff;
+  font-size:13px;
+  cursor:pointer;
+}
+.cat-btn.active{
+  background:#2563eb;
+  border-color:#2563eb;
+  color:#fff;
 }
 .card{
   background:#151c32;
@@ -57,96 +77,103 @@ button{
 button.secondary{
   background:#0c1430;
 }
-.toast{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#0e2338;
-  border:1px solid #2b5ea6;
-  padding:10px 14px;
-  border-radius:10px;
-  font-size:14px;
-  display:none;
-}
 </style>
 </head>
 
 <body>
 
 <h1>📢 WOS 공지</h1>
-<div id="list">불러오는 중…</div>
 
-<div id="toast" class="toast"></div>
+<div class="categories" id="categoryBar"></div>
+<div id="list">불러오는 중…</div>
 
 <script>
 const API = "https://api.github.com/repos/seollock0/WOS/issues";
-const toast = document.getElementById("toast");
 
-/**
- * ✅ Issue 본문에서 "### 공지 내용" 이후만 추출
- * - 카테고리 / 날짜 / 헤더는 완전히 제거
- */
+const CATEGORIES = [
+  "전체",
+  "SvS준비전",
+  "SvS전쟁단계",
+  "성채&요새점령",
+  "곰사냥",
+  "기타 정기이벤트",
+  "일반 공지"
+];
+
+let currentCategory = "전체";
+let allIssues = [];
+
 function extractNoticeBody(body){
-  if(!body) return "";
-
   const marker = "### 공지 내용";
-  const idx = body.indexOf(marker);
-
-  if(idx === -1){
-    return body.trim();
-  }
-
-  return body
-    .slice(idx + marker.length)
-    .trim();
+  const idx = body?.indexOf(marker);
+  return idx === -1 ? body?.trim() : body.slice(idx + marker.length).trim();
 }
 
-function showToast(msg){
-  toast.textContent = msg;
-  toast.style.display = "block";
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 1200);
+function renderCategories(){
+  const bar = document.getElementById("categoryBar");
+  bar.innerHTML = "";
+  CATEGORIES.forEach(cat=>{
+    const btn = document.createElement("button");
+    btn.className = "cat-btn" + (cat === currentCategory ? " active" : "");
+    btn.innerText = cat;
+    btn.onclick = () =>{
+      currentCategory = cat;
+      renderCategories();
+      renderList();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+function renderList(){
+  const root = document.getElementById("list");
+  root.innerHTML = "";
+
+  const filtered = currentCategory === "전체"
+    ? allIssues
+    : allIssues.filter(issue =>
+        issue.labels.some(l => l.name === currentCategory)
+      );
+
+  if(filtered.length === 0){
+    root.innerHTML = "<div style='color:#9aa3b2;'>해당 카테고리 공지가 없습니다.</div>";
+    return;
+  }
+
+  filtered.forEach(issue=>{
+    const body = extractNoticeBody(issue.body);
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${issue.title}</div>
+      <div class="meta">#${issue.number} · ${issue.created_at.slice(0,10)}</div>
+      <div class="content">${body}</div>
+      <div class="actions">
+        <button>📋 본문 복사</button>
+        <button class="secondary">✏️ GitHub에서 수정</button>
+      </div>
+    `;
+
+    card.querySelector("button").onclick = ()=>{
+      navigator.clipboard.writeText(body);
+      alert("공지 본문 복사 완료");
+    };
+
+    card.querySelector(".secondary").onclick = ()=>{
+      window.open(issue.html_url,"_blank");
+    };
+
+    root.appendChild(card);
+  });
 }
 
 fetch(API)
-  .then(r => r.json())
-  .then(issues => {
-    const root = document.getElementById("list");
-    root.innerHTML = "";
-
-    issues.forEach(issue => {
-      if(issue.pull_request) return;
-
-      const noticeBody = extractNoticeBody(issue.body);
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <div class="title">${issue.title}</div>
-        <div class="meta">#${issue.number} · ${issue.created_at.slice(0,10)}</div>
-        <div class="content">${noticeBody}</div>
-        <div class="actions">
-          <button class="copy-btn">📋 본문 복사</button>
-          <button class="secondary edit-btn">✏️ GitHub에서 수정</button>
-        </div>
-      `;
-
-      // ✅ 공지 본문만 복사
-      card.querySelector(".copy-btn").onclick = () => {
-        navigator.clipboard.writeText(noticeBody);
-        showToast("공지 본문 복사 완료");
-      };
-
-      // GitHub Issue 편집 화면 이동
-      card.querySelector(".edit-btn").onclick = () => {
-        window.open(issue.html_url, "_blank");
-      };
-
-      root.appendChild(card);
-    });
+  .then(r=>r.json())
+  .then(data=>{
+    allIssues = data.filter(i=>!i.pull_request);
+    renderCategories();
+    renderList();
   });
 </script>
 
