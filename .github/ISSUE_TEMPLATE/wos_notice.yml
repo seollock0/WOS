@@ -1,0 +1,40 @@
+name: WOS 공지 작성
+description: WOS 공지 (GitHub Pages에 자동 반영)
+title: "[카테고리] 공지 제목을 입력하세요"
+labels: ["WOS"]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: 카테고리
+      options:
+        - SvS 준비전
+        - SvS 진행중
+        - 서버 이벤트
+        - 일반 공지
+    validations:
+      required: true
+
+  - type: input
+    id: date
+    attributes:
+      label: 기준 날짜
+      placeholder: "YYYY-MM-DD"
+    validations:
+      required: true
+
+  - type: textarea
+    id: content
+    attributes:
+      label: 공지 내용
+      description: |
+        GitHub Pages에 그대로 표시됩니다.
+      placeholder: |
+        1일차 (월)
+        ✅ 불의 수정(FC) : 강력추천
+        ✅ 건설 가속 : 강력추천
+        🆗 불의 수정 조각 : 추천
+        🆗 장식물(Charms) : 추천
+        ⛔ 연구 / 훈련 / 영웅성장 : 비추천
+    validations:
+      required: true
