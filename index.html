@@ -88,10 +88,13 @@ fetch(API)
         </div>
       `;
 
-      card.querySelector("button").onclick = () => {
-        navigator.clipboard.writeText(issue.body);
-        alert("복사 완료");
-      };
+    const contentEl = card.querySelector(".content");
+
+card.querySelector("button").onclick = () => {
+  navigator.clipboard.writeText(contentEl.innerText);
+  alert("복사 완료");
+};
+
 
       card.querySelector(".secondary").onclick = () => {
         window.open(issue.html_url, "_blank");
