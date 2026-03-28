@@ -77,11 +77,30 @@ button.secondary{
 <h1>📢 WOS 공지</h1>
 <div id="list">불러오는 중…</div>
 
-<div id="toast" class="toast">복사 완료</div>
+<div id="toast" class="toast"></div>
 
 <script>
 const API = "https://api.github.com/repos/seollock0/WOS/issues";
 const toast = document.getElementById("toast");
+
+/**
+ * ✅ Issue 본문에서 "### 공지 내용" 이후만 추출
+ * - 카테고리 / 날짜 / 헤더는 완전히 제거
+ */
+function extractNoticeBody(body){
+  if(!body) return "";
+
+  const marker = "### 공지 내용";
+  const idx = body.indexOf(marker);
+
+  if(idx === -1){
+    return body.trim();
+  }
+
+  return body
+    .slice(idx + marker.length)
+    .trim();
+}
 
 function showToast(msg){
   toast.textContent = msg;
@@ -100,28 +119,28 @@ fetch(API)
     issues.forEach(issue => {
       if(issue.pull_request) return;
 
+      const noticeBody = extractNoticeBody(issue.body);
+
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
         <div class="title">${issue.title}</div>
         <div class="meta">#${issue.number} · ${issue.created_at.slice(0,10)}</div>
-        <div class="content">${issue.body}</div>
+        <div class="content">${noticeBody}</div>
         <div class="actions">
           <button class="copy-btn">📋 본문 복사</button>
           <button class="secondary edit-btn">✏️ GitHub에서 수정</button>
         </div>
       `;
 
-      const contentEl = card.querySelector(".content");
-
       // ✅ 공지 본문만 복사
       card.querySelector(".copy-btn").onclick = () => {
-        navigator.clipboard.writeText(contentEl.innerText);
+        navigator.clipboard.writeText(noticeBody);
         showToast("공지 본문 복사 완료");
       };
 
-      // GitHub Issue로 이동
+      // GitHub Issue 편집 화면 이동
       card.querySelector(".edit-btn").onclick = () => {
         window.open(issue.html_url, "_blank");
       };
@@ -133,4 +152,3 @@ fetch(API)
 
 </body>
 </html>
-``
