@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WOS 공지</title>
+
+<style>
+body{
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0b1020;
+  color:#e9ecf1;
+  margin:0;
+  padding:12px;
+}
+h1{
+  font-size:20px;
+  margin-bottom:16px;
+}
+.card{
+  background:#151c32;
+  border:1px solid #26304f;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.title{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+.meta{
+  color:#9aa3b2;
+  font-size:12px;
+  margin-bottom:10px;
+}
+.content{
+  white-space:pre-wrap;
+  font-size:14px;
+  line-height:1.6;
+}
+.actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+button{
+  flex:1;
+  padding:10px;
+  font-size:14px;
+  border-radius:10px;
+  border:1px solid #35508a;
+  background:#0f1a3a;
+  color:#fff;
+}
+button.secondary{
+  background:#0c1430;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📢 WOS 공지</h1>
+<div id="list">불러오는 중…</div>
+
+<script>
+const API = "https://api.github.com/repos/seollock0/WOS/issues";
+
+fetch(API)
+  .then(r => r.json())
+  .then(issues => {
+    const root = document.getElementById("list");
+    root.innerHTML = "";
+
+    issues.forEach(issue => {
+      if(issue.pull_request) return;
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${issue.title}</div>
+        <div class="meta">#${issue.number} · ${issue.created_at.slice(0,10)}</div>
+        <div class="content">${issue.body}</div>
+        <div class="actions">
+          <button>📋 복사</button>
+          <button class="secondary">✏️ GitHub에서 수정</button>
+        </div>
+      `;
+
+      card.querySelector("button").onclick = () => {
+        navigator.clipboard.writeText(issue.body);
+        alert("복사 완료");
+      };
+
+      card.querySelector(".secondary").onclick = () => {
+        window.open(issue.html_url, "_blank");
+      };
+
+      root.appendChild(card);
+    });
+  });
+</script>
+
+</body>
+</html>
